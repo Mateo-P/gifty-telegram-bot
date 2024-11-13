@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "gifty-telegram-bot"
+version = "0.1.0"
+description = ""
+authors = ["mateo perez <mateo.perez-c@spycloud.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.115.5"
+pydantic = "^2.9.2"
+uvicorn = "^0.32.0"
+python-telegram-bot = "^21.7"
+python-dotenv = "^1.0.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

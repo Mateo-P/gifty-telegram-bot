@@ -1,0 +1,48 @@
+networks:
+  gifty_network:
+
+services:
+  backend:
+    build:
+      context: .
+      target: dev
+    container_name: gifty_bot_api
+    ports:
+      - 8000:8000
+    networks:
+      - gifty_network
+    volumes:
+      - ./:/app/src/
+    env_file: .env
+    depends_on:
+      - postgres
+        # condition: service_healthy
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_HOST: postgres
+    command:
+      [
+        "uvicorn",
+        "--host=0.0.0.0",
+        "--port=8000",
+        "--reload",
+        "main:app",
+      ]
+
+  postgres:
+    image: postgres:14
+    container_name: gifty_bot_db
+    networks:
+      - gifty_network
+    ports:
+      - "127.0.0.1:5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
