@@ -24,10 +24,9 @@ class TelegramClient:
         )
         self.bot_application.add_handler(CallbackQueryHandler(self.button_handler))
 
-    async def start(self):
-        await self.bot_application.initialize()
-        await self.bot_application.start()
-        print("Started gifty telegram bot")
+    def start(self):
+        print("INFO:     Started gifty telegram bot 🚀🤖📱")
+        self.bot_application.run_polling()
 
     async def stop(self):
         await self.bot_application.stop()
@@ -42,6 +41,7 @@ class TelegramClient:
     ) -> None:
         user_id = update.message.from_user.id
         print(f"User ID: {user_id}")
+        # TODO fetch user name in case it exist
 
         keyboard = [
             [InlineKeyboardButton("Buy", callback_data="buy")],

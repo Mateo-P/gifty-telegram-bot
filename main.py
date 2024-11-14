@@ -1,23 +1,16 @@
 from fastapi import FastAPI
-from contextlib import asynccontextmanager
-from utils.telegram import TelegramClient
 from routers import payment
-
+import threading
+import uvicorn
+from utils.telegram import TelegramClient
 
 telegram_client = TelegramClient()
+app = FastAPI()
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    await telegram_client.start()
-
-    # yield to FastAPI
-    yield
-
-    await telegram_client.stop()
-
-
-app = FastAPI(title="gifty bot api", version="1.0.0", lifespan=lifespan)
+# Función para correr FastAPI
+def run_fastapi():
+    uvicorn.run(app, host="0.0.0.0", port=8000)
 
 
 # health check endpoint
@@ -31,3 +24,16 @@ app.include_router(
     payment.router,
     prefix="/payments",
 )
+
+
+def main():
+    # order matters here. first start fastapi
+    fastapi_thread = threading.Thread(target=run_fastapi, daemon=True)
+    fastapi_thread.start()
+
+    telegram_client = TelegramClient()
+    telegram_client.start()
+
+
+if __name__ == "__main__":
+    main()
