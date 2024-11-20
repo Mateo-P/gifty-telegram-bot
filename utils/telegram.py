@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 load_dotenv()
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 BACKEND_URL = os.getenv("BACKEND_URL")
+print("BACKEND_URL: ", BACKEND_URL)
 
 
 class TelegramClient:
@@ -75,12 +76,15 @@ class TelegramClient:
             await query.edit_message_text(text=f"You selected {query.data}.")
             post_data = {
                 "amount": int(query.data),
-                "telegram_id": str(query.from_user.id),
+                "channel": "telegram",
+                "user_channel_id": str(query.from_user.id),
             }
 
             async with httpx.AsyncClient() as client:
                 try:
-                    response = await client.post(f"{BACKEND_URL}", json=post_data)
+                    response = await client.post(
+                        f"{BACKEND_URL}/giftcards/buy/", json=post_data
+                    )
                     if response.status_code == 200:
                         data = response.json()
                         payment_link = data.get("payment_link_url")

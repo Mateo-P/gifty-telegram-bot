@@ -1,6 +1,8 @@
+from typing import Any
 from pydantic import BaseModel
 
 
 class PaymentStatus(BaseModel):
     status: str
-    id: str
+    telegram_id: str
+    gift_card: Any

@@ -14,9 +14,9 @@ services:
     volumes:
       - ./:/app/src/
     env_file: .env
-    depends_on:
-      - postgres
-        # condition: service_healthy
+    # depends_on:
+    #   - postgres
+    #     # condition: service_healthy
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -27,19 +27,19 @@ services:
         "main.py",
       ]
 
-  postgres:
-    image: postgres:14
-    container_name: gifty_bot_db
-    networks:
-      - gifty_network
-    ports:
-      - "127.0.0.1:5432:5432"
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=postgres
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+  # postgres:
+  #   image: postgres:14
+  #   container_name: gifty_bot_db
+  #   networks:
+  #     - gifty_network
+  #   ports:
+  #     - "127.0.0.1:5433:5433"
+  #   environment:
+  #     - POSTGRES_USER=postgres
+  #     - POSTGRES_PASSWORD=postgres
+  #     - POSTGRES_DB=postgres
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
 
 volumes:
   postgres_data:
