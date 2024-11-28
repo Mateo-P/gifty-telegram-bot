@@ -32,7 +32,7 @@ class TelegramClient:
         await self.bot_application.shutdown()
         print("Stopped gifty telegram bot")
 
-    async def send_message(self, chat_id: int, text: str, parse_mode: str | None):
+    async def send_message(self, chat_id: int, text: str, parse_mode: str = None):
         await self.bot_application.bot.send_message(
             chat_id=chat_id, text=text, parse_mode=parse_mode
         )
