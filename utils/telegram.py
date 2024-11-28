@@ -89,7 +89,7 @@ class TelegramClient:
             await query.edit_message_text(text=f"You selected {query.data}.")
             post_data = {
                 "amount": int(query.data),
-                "channel": str(query.from_user.id),
+                "channel": "telegram",
                 "user_channel_id": str(query.from_user.id),
             }
 
