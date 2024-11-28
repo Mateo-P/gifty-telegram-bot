@@ -1,3 +1,4 @@
+from contextlib import suppress
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import (
     Application,
@@ -46,18 +47,13 @@ class TelegramClient:
         consumer_name = update.message.from_user.first_name
         # Make a GET request to fetch user's gift cards
         async with httpx.AsyncClient() as client:
-            try:
+            with suppress(Exception):
                 response = await client.get(
                     f"{BACKEND_URL}/giftcards/", params={"telegram_id": user_id}
                 )
-                if response.status_code == 200:
-                    gift_cards = response.json().get("gift_cards", [])
-                    if gift_cards:
-                        context.user_data["gift_cards"] = gift_cards
-                else:
-                    print(f"Failed to fetch gift cards: {response.text}")
-            except Exception as e:
-                print(f"An error occurred while fetching gift cards: {e}")
+                gift_cards = response.json().get("gift_cards", [])
+                if gift_cards:
+                    context.user_data["gift_cards"] = gift_cards
 
         # Build the keyboard
         keyboard = [
