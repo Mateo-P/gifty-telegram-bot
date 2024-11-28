@@ -13,19 +13,19 @@ async def payment_status_update(
     user_id = payment.telegram_id
     giftcard = payment.gift_card
     gift_card_details = (
-        f"🎁 Gift Card Details:\n\n"
-        f"• Code: `{giftcard['code']}`\n"
-        f"• Balance: {giftcard['balance']} COP\n"
-        f"• Expires At: {giftcard['expires_at']}\n"
-        f"\nThank you for your purchase! 🎉"
+        "🎁 <b>Gift Card Details:</b>\n\n"
+        f"• <b>Code:</b> <code>{giftcard['code']}</code>\n"
+        f"• <b>Status:</b> {giftcard['status']}\n"
+        f"• <b>Balance:</b> {giftcard['balance']} COP\n"
+        f"• <b>Expires At:</b> {giftcard['expires_at']}\n"
+        "\nThank you for your purchase! 🎉"
     )
     print(f"[Status]: {status}, [Id]: {user_id}")
 
     chat_id = int(user_id)
     if status == "success":
         await telegram_client.send_message(
-            chat_id=chat_id,
-            text=gift_card_details,
+            chat_id=chat_id, text=gift_card_details, parse_mode="HTML"
         )
     else:
         await telegram_client.bot.send_message(

@@ -1,4 +1,3 @@
-# telegram_client.py
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import (
     Application,
@@ -14,7 +13,6 @@ from dotenv import load_dotenv
 load_dotenv()
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 BACKEND_URL = os.getenv("BACKEND_URL")
-print("BACKEND_URL: ", BACKEND_URL)
 
 
 class TelegramClient:
@@ -34,24 +32,46 @@ class TelegramClient:
         await self.bot_application.shutdown()
         print("Stopped gifty telegram bot")
 
-    async def send_message(self, chat_id: int, text: str):
-        await self.bot_application.bot.send_message(chat_id=chat_id, text=text)
+    async def send_message(self, chat_id: int, text: str, parse_mode: str | None):
+        await self.bot_application.bot.send_message(
+            chat_id=chat_id, text=text, parse_mode=parse_mode
+        )
 
     async def welcome_message(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> None:
         user_id = update.message.from_user.id
         print(f"User ID: {user_id}")
-        # TODO fetch user name in case it exist
 
+        consumer_name = ""
+        # Make a GET request to fetch user's gift cards
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.get(
+                    f"{BACKEND_URL}/giftcards/", params={"telegram_id": user_id}
+                )
+                if response.status_code == 200:
+                    customer = response.json().get("customer")
+                    gift_cards = response.json().get("gift_cards", [])
+                    if gift_cards:
+                        context.user_data["gift_cards"] = gift_cards
+                    if customer:
+                        consumer_name = f" {customer.split(" ")[0]}"
+                else:
+                    print(f"Failed to fetch gift cards: {response.text}")
+            except Exception as e:
+                print(f"An error occurred while fetching gift cards: {e}")
+
+        # Build the keyboard
         keyboard = [
             [InlineKeyboardButton("Buy", callback_data="buy")],
             [InlineKeyboardButton("Redeem", callback_data="redeem")],
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
 
+        # Send the welcome message along with gift card info
         await update.message.reply_text(
-            "Hi, welcome to Gifty!", reply_markup=reply_markup
+            f"Hi{consumer_name}, welcome to Gifty! 🎁", reply_markup=reply_markup
         )
 
     async def button_handler(
@@ -76,7 +96,7 @@ class TelegramClient:
             await query.edit_message_text(text=f"You selected {query.data}.")
             post_data = {
                 "amount": int(query.data),
-                "channel": "telegram",
+                "channel": str(query.from_user.id),
                 "user_channel_id": str(query.from_user.id),
             }
 
@@ -109,5 +129,17 @@ class TelegramClient:
                         chat_id=query.from_user.id,
                         text="An error occurred while processing your request.",
                     )
+        elif query.data == "redeem":
+            gift_cards = context.user_data.get("gift_cards")
+            if gift_cards:
+                gift_cards_message = "Here are your active gift cards:\n" + "\n".join(
+                    [
+                        f"Code: {gc['code']}, Balance: {gc['balance']}"
+                        for gc in gift_cards
+                    ]
+                )
+                await query.edit_message_text(text=gift_cards_message)
         else:
-            await query.edit_message_text(text="You chose to Redeem.")
+            await query.edit_message_text(
+                text="You have no active gift cards to redeem."
+            )
