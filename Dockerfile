@@ -54,4 +54,4 @@ FROM build AS dev
 
 RUN poetry install
 
-COPY tests/ tests/
+#COPY tests/ tests/
