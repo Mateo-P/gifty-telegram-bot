@@ -40,10 +40,10 @@ class TelegramClient:
     async def welcome_message(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> None:
-        user = update.message.from_user
-        print(f"User: {user}")
+        user_id = update.message.from_user.id
+        print(f"User ID: {user_id}")
 
-        consumer_name = ""
+        consumer_name = update.message.from_user.first_name
         # Make a GET request to fetch user's gift cards
         async with httpx.AsyncClient() as client:
             try:
@@ -51,12 +51,9 @@ class TelegramClient:
                     f"{BACKEND_URL}/giftcards/", params={"telegram_id": user_id}
                 )
                 if response.status_code == 200:
-                    customer = response.json().get("customer")
                     gift_cards = response.json().get("gift_cards", [])
                     if gift_cards:
                         context.user_data["gift_cards"] = gift_cards
-                    if customer:
-                        consumer_name = f" {customer.split(' ')[0]}"
                 else:
                     print(f"Failed to fetch gift cards: {response.text}")
             except Exception as e:
