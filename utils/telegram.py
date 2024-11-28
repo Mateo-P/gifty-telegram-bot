@@ -1,4 +1,3 @@
-from contextlib import suppress
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import (
     Application,
@@ -45,15 +44,6 @@ class TelegramClient:
         print(f"User ID: {user_id}")
 
         consumer_name = update.message.from_user.first_name
-        # Make a GET request to fetch user's gift cards
-        async with httpx.AsyncClient() as client:
-            with suppress(Exception):
-                response = await client.get(
-                    f"{BACKEND_URL}/giftcards/", params={"telegram_id": user_id}
-                )
-                gift_cards = response.json().get("gift_cards", [])
-                if gift_cards:
-                    context.user_data["gift_cards"] = gift_cards
 
         # Build the keyboard
         keyboard = [
@@ -72,7 +62,7 @@ class TelegramClient:
     ) -> None:
         query = update.callback_query
         await query.answer()
-
+        user_id = query.from_user.id
         if query.data == "buy":
             amount_keyboard = [
                 [InlineKeyboardButton("10,000", callback_data="10000")],
@@ -90,7 +80,7 @@ class TelegramClient:
             post_data = {
                 "amount": int(query.data),
                 "channel": "telegram",
-                "user_channel_id": str(query.from_user.id),
+                "user_channel_id": str(user_id),
             }
 
             async with httpx.AsyncClient() as client:
@@ -103,17 +93,17 @@ class TelegramClient:
                         payment_link = data.get("payment_link_url")
                         if payment_link:
                             await self.send_message(
-                                chat_id=query.from_user.id,
+                                chat_id=user_id,
                                 text=f"Please complete the payment using the following link:\n{payment_link}",
                             )
                         else:
                             await self.send_message(
-                                chat_id=query.from_user.id,
+                                chat_id=user_id,
                                 text="We could not retrieve the payment link.",
                             )
                     else:
                         await self.send_message(
-                            chat_id=query.from_user.id,
+                            chat_id=user_id,
                             text="There was an error processing your purchase. Please try again.",
                         )
                 except Exception as e:
@@ -123,7 +113,10 @@ class TelegramClient:
                         text="An error occurred while processing your request.",
                     )
         elif query.data == "redeem":
-            gift_cards = context.user_data.get("gift_cards")
+            response = await client.get(
+                f"{BACKEND_URL}/giftcards/", params={"telegram_id": user_id}
+            )
+            gift_cards = response.json().get("gift_cards", [])
             if gift_cards:
                 gift_cards_message = "Here are your active gift cards:\n" + "\n".join(
                     [
