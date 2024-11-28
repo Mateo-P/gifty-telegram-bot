@@ -68,7 +68,7 @@ class TelegramClient:
 
         # Send the welcome message along with gift card info
         await update.message.reply_text(
-            f"Hi{consumer_name}, welcome to Gifty! 🎁", reply_markup=reply_markup
+            f"Hi {consumer_name}, welcome to Gifty! 🎁", reply_markup=reply_markup
         )
 
     async def button_handler(
