@@ -56,7 +56,7 @@ class TelegramClient:
                     if gift_cards:
                         context.user_data["gift_cards"] = gift_cards
                     if customer:
-                        consumer_name = f" {customer.split(" ")[0]}"
+                        consumer_name = f" {customer.split(' ')[0]}"
                 else:
                     print(f"Failed to fetch gift cards: {response.text}")
             except Exception as e:
