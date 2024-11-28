@@ -40,8 +40,8 @@ class TelegramClient:
     async def welcome_message(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> None:
-        user_id = update.message.from_user.id
-        print(f"User ID: {user_id}")
+        user = update.message.from_user
+        print(f"User: {user}")
 
         consumer_name = ""
         # Make a GET request to fetch user's gift cards
