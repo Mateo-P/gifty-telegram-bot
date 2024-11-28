@@ -20,11 +20,9 @@ class TelegramClient:
     def __init__(self):
         self.bot_application = Application.builder().token(TELEGRAM_TOKEN).build()
         self.bot_application.add_handler(
-            MessageHandler(filters.TEXT & ~filters.COMMAND,
-                           self.welcome_message)
+            MessageHandler(filters.TEXT & ~filters.COMMAND, self.welcome_message)
         )
-        self.bot_application.add_handler(
-            CallbackQueryHandler(self.button_handler))
+        self.bot_application.add_handler(CallbackQueryHandler(self.button_handler))
 
     def start(self):
         print("INFO:     Started gifty telegram bot 🚀🤖📱")
@@ -117,35 +115,47 @@ class TelegramClient:
                     )
         elif query.data == "redeem":
             async with httpx.AsyncClient() as client:
-                with suppress(Exception):
+                try:
                     response = await client.get(
                         f"{BACKEND_URL}/giftcards/", params={"telegram_id": user_id}
                     )
                     gift_cards = response.json().get("gift_cards", [])
                     if gift_cards:
-                        gift_cards_message = "Chosee Gift Card to redeem:"
                         for gc in gift_cards:
-                            gift_card_details = (
-                                "🎁 <b>Gift Card Details:</b>\n\n"
-                                f"• <b>Code:</b> <code>{gc['code']}</code>\n"
-                                f"• <b>Status:</b> {gc['status']}\n"
-                                f"• <b>Balance:</b> {gc['balance']} COP\n"
-                                f"• <b>Expires At:</b> {gc['expires_at']}\n"
+                            # Send individual message for each gift card
+                            gift_card_message = (
+                                f"🎁 **Gift Card Details**\n\n"
+                                f"• **Code**: `{gc['code']}`\n"
+                                f"• **Balance**: {gc['balance']} COP\n"
+                                f"• **Expires At**: {gc['expires_at']}\n"
                             )
-                            gcs_list = [
-                                InlineKeyboardButton(
-                                    f"select",
-                                    callback_data=f"gc_{gc['code']}",
-                                )
-                            ]
-
-                            gcs_list_markup = InlineKeyboardMarkup(gcs_list)
-                            await self.bot_application.bot.send_message(chat_id=user_id,
-                                text=gift_card_details,parse_mode="HTML", reply_markup=gcs_list_markup
+                            keyboard = InlineKeyboardMarkup(
+                                [[
+                                    InlineKeyboardButton(
+                                        "Redeem This Gift Card",
+                                        callback_data=f"redeem_gc_{gc['code']}",
+                                    )
+                                ]]
                             )
-
+                            await query.message.reply_text(
+                                text=gift_card_message,
+                                reply_markup=keyboard,
+                                parse_mode="Markdown",
+                            )
+                    else:
+                        await query.edit_message_text(
+                            text="You don't have any gift cards to redeem."
+                        )
+                except Exception as e:
+                    print(f"An error occurred while fetching gift cards: {e}")
+                    await query.edit_message_text(
+                        text="❗ An error occurred while fetching gift cards."
+                    )
+        
         elif query.data.startswith("gc"):
-            await query.edit_message_text(text="You have chosen a gift card to redeem.")
+            await query.edit_message_text(
+                text="You have no active gift cards to redeem."
+            )
         else:
             await query.edit_message_text(
                 text="You have no active gift cards to redeem."
