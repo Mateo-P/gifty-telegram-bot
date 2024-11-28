@@ -20,9 +20,11 @@ class TelegramClient:
     def __init__(self):
         self.bot_application = Application.builder().token(TELEGRAM_TOKEN).build()
         self.bot_application.add_handler(
-            MessageHandler(filters.TEXT & ~filters.COMMAND, self.welcome_message)
+            MessageHandler(filters.TEXT & ~filters.COMMAND,
+                           self.welcome_message)
         )
-        self.bot_application.add_handler(CallbackQueryHandler(self.button_handler))
+        self.bot_application.add_handler(
+            CallbackQueryHandler(self.button_handler))
 
     def start(self):
         print("INFO:     Started gifty telegram bot 🚀🤖📱")
@@ -122,25 +124,25 @@ class TelegramClient:
                     gift_cards = response.json().get("gift_cards", [])
                     if gift_cards:
                         gift_cards_message = "Chosee Gift Card to redeem:"
-
-                        gcs_list = [
-                            [
+                        for gc in gift_cards:
+                            gift_card_details = (
+                                "🎁 <b>Gift Card Details:</b>\n\n"
+                                f"• <b>Code:</b> <code>{gc['code']}</code>\n"
+                                f"• <b>Status:</b> {gc['status']}\n"
+                                f"• <b>Balance:</b> {gc['balance']} COP\n"
+                                f"• <b>Expires At:</b> {gc['expires_at']}\n"
+                            )
+                            gcs_list = [
                                 InlineKeyboardButton(
-                                    "🎁 <b>Gift Card Details:</b>\n\n"
-                                    f"• <b>Code:</b> <code>{gc['code']}</code>\n"
-                                    f"• <b>Status:</b> {gc['status']}\n"
-                                    f"• <b>Balance:</b> {gc['balance']} COP\n"
-                                    f"• <b>Expires At:</b> {gc['expires_at']}\n",
+                                    f"select",
                                     callback_data=f"gc_{gc['code']}",
                                 )
                             ]
-                            for gc in gift_cards
-                        ]
 
-                        gcs_list_markup = InlineKeyboardMarkup(gcs_list)
-                        await query.edit_message_text(
-                            text=gift_cards_message, reply_markup=gcs_list_markup
-                        )
+                            gcs_list_markup = InlineKeyboardMarkup(gcs_list)
+                            await query.edit_message_text(
+                                text=gift_card_details, reply_markup=gcs_list_markup
+                            )
 
         elif query.data.startswith("gc"):
             await query.edit_message_text(text="You have chosen a gift card to redeem.")
