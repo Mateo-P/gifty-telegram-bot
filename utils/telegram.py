@@ -77,7 +77,6 @@ class TelegramClient:
             )
 
         elif query.data in ["10000", "30000", "50000", "100000"]:
-            await query.edit_message_text(text=f"You selected {query.data}.")
             post_data = {
                 "amount": int(query.data),
                 "channel": "telegram",
@@ -93,9 +92,12 @@ class TelegramClient:
                         data = response.json()
                         payment_link = data.get("payment_link_url")
                         if payment_link:
-                            await self.send_message(
-                                chat_id=user_id,
-                                text=f"Please complete the payment using the following link:\n{payment_link}",
+                            pay_button = [
+                                [InlineKeyboardButton("Pay", url=payment_link)],
+                            ]
+                            pay_button_reply_markup = InlineKeyboardMarkup(pay_button)
+                            await query.edit_message_text(
+                                text=f"Please complete the payment clicking 👇:", reply_markup=pay_button_reply_markup
                             )
                         else:
                             await self.send_message(
