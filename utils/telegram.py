@@ -140,8 +140,8 @@ class TelegramClient:
                             ]
 
                             gcs_list_markup = InlineKeyboardMarkup(gcs_list)
-                            await query.edit_message_text(
-                                text=gift_card_details, reply_markup=gcs_list_markup
+                            await self.bot_application.bot.send_message(chat_id=user_id,
+                                text=gift_card_details,parse_mode="HTML", reply_markup=gcs_list_markup
                             )
 
         elif query.data.startswith("gc"):
