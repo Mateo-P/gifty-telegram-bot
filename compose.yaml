@@ -8,7 +8,7 @@ services:
       target: dev
     container_name: gifty_bot_api
     ports:
-      - 8000:8000
+      - 80:8000
     networks:
       - gifty_network
     volumes:

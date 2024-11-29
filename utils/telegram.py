@@ -46,16 +46,9 @@ class TelegramClient:
 
         consumer_name = update.message.from_user.first_name
 
-        # Build the keyboard
-        keyboard = [
-            [InlineKeyboardButton("Buy", callback_data="buy")],
-            [InlineKeyboardButton("Redeem", callback_data="redeem")],
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-
         # Send the welcome message along with gift card info
         await update.message.reply_text(
-            f"Hi {consumer_name}, welcome to Gifty! 🎁", reply_markup=reply_markup
+            f"Hi {consumer_name}, welcome to Gifty! 🎁", reply_markup=self.get_menu()
         )
 
     async def button_handler(
@@ -64,6 +57,7 @@ class TelegramClient:
         query = update.callback_query
         await query.answer()
         user_id = query.from_user.id
+        message_id = query.message.message_id
         if query.data == "buy":
             amount_keyboard = [
                 [InlineKeyboardButton("10,000", callback_data="10000")],
@@ -81,6 +75,7 @@ class TelegramClient:
                 "amount": int(query.data),
                 "channel": "telegram",
                 "user_channel_id": str(user_id),
+                "user_message_id": message_id
             }
 
             async with httpx.AsyncClient() as client:
@@ -97,7 +92,8 @@ class TelegramClient:
                             ]
                             pay_button_reply_markup = InlineKeyboardMarkup(pay_button)
                             await query.edit_message_text(
-                                text=f"Please complete the payment clicking 👇:", reply_markup=pay_button_reply_markup
+                                text=f"Please complete the payment clicking 👇:",
+                                reply_markup=pay_button_reply_markup,
                             )
                         else:
                             await self.send_message(
@@ -123,27 +119,23 @@ class TelegramClient:
                     )
                     gift_cards = response.json().get("gift_cards", [])
                     if gift_cards:
-                        for gc in gift_cards:
-                            # Send individual message for each gift card
-                            gift_card_message = (
-                                f"🎁 **Gift Card Details**\n\n"
-                                f"• **Code**: `{gc['code']}`\n"
-                                f"• **Balance**: {gc['balance']} COP\n"
-                                f"• **Expires At**: {gc['expires_at']}\n"
-                            )
-                            keyboard = InlineKeyboardMarkup(
-                                [[
-                                    InlineKeyboardButton(
-                                        "Redeem This Gift Card",
-                                        callback_data=f"redeem_gc_{gc['code']}",
-                                    )
-                                ]]
-                            )
-                            await query.message.reply_text(
-                                text=gift_card_message,
-                                reply_markup=keyboard,
-                                parse_mode="Markdown",
-                            )
+                        gcs_list = [
+                            [
+                                InlineKeyboardButton(
+                                    f"Code: {gc['code']} - Balance: ${gc['balance']}".ljust(50),
+                                    callback_data=f"gc_{gc['code']}",
+                                )
+                            ]
+                            for gc in gift_cards
+                        ]
+
+                        gcs_list_markup = InlineKeyboardMarkup(gcs_list)
+                        await query.edit_message_text(
+                            text="Your             🎁**Gift Cards**          👇",
+                            reply_markup=gcs_list_markup,
+                            parse_mode="Markdown",
+                        )
+                        context.user_data["gift_cards"]= gift_cards
                     else:
                         await query.edit_message_text(
                             text="You don't have any gift cards to redeem."
@@ -155,10 +147,41 @@ class TelegramClient:
                     )
         
         elif query.data.startswith("gc"):
-            await query.edit_message_text(
-                text="You have no active gift cards to redeem."
-            )
+            # Extract the code from query.data
+            gift_card_code = query.data.split("_")[1]  # Extracts "R21AC2" from "gc_R21AC2"
+
+            # Retrieve the gift cards from user data
+            gift_cards = context.user_data.get("gift_cards", [])
+
+            # Find the gift card that matches the code
+            matching_card = next((gc for gc in gift_cards if gc["code"] == gift_card_code), None)
+
+            if matching_card:
+                gift_card_message = (
+                    f"Your              🎁**Gift Card**            👇\n\n"
+                    f"• **Code**: `{matching_card['code']}`\n"
+                    f"• **Status**: {matching_card['status']}\n"
+                    f"• **Balance**: {matching_card['balance']} COP\n"
+                    f"• **Expires At**: {matching_card['expires_at']}\n\n\n"
+                    "**How to redeem?**\n"
+                    "Provide the shop the code above to redeem your balance."
+                )
+                await query.edit_message_text(
+                    text=gift_card_message,
+                    parse_mode="Markdown",
+                    reply_markup=self.get_menu(),
+                )
+            else:
+                await query.edit_message_text(
+                    text="You have no active gift card matching the code to redeem."
+                )
         else:
             await query.edit_message_text(
                 text="You have no active gift cards to redeem."
             )
+
+    def get_menu(self):  # Fixed: Added self as a parameter
+        return InlineKeyboardMarkup([
+            [InlineKeyboardButton("Buy", callback_data="buy")],
+            [InlineKeyboardButton("Redeem", callback_data="redeem")],
+        ])
