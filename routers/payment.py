@@ -39,7 +39,7 @@ async def payment_status_update(
         except telegram.error.BadRequest as e:
             if "Message to edit not found" in str(e):
                 # Send a new message if the original message cannot be edited
-                await telegram_client.bot.send_message(
+                await telegram_client.bot_application.bot.send_message(
                     chat_id=chat_id,
                     text=gift_card_details,
                     parse_mode="HTML",

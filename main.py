@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from routers import payment
+from routers import giftcard, payment
 import threading
 import uvicorn
 from utils.telegram import TelegramClient
@@ -20,6 +20,10 @@ def healthcheck():
 
 
 # routes
+app.include_router(
+    giftcard.router,
+    prefix="/giftcards",
+)
 app.include_router(
     payment.router,
     prefix="/payments",
